@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── ENUMS ─────────────────────────────────────────────────────────────────
+
+enum LedgerEntryType {
+  DEPOSIT
+  API_USAGE
+  REFUND
+  ADJUSTMENT
+  PROVIDER_CREDIT
+}
+
+enum InboxStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum DepositChain {
+  SOLANA
+  BASE
+}
+
+enum RouteCategory {
+  TEXT_AI
+  IMAGE_AI
+  DATA
+  FINANCE
+  WEATHER
+  COMMUNICATION
+  UTILITIES
+  DEVELOPER_TOOLS
+  AFRICA_SPECIFIC
+  OTHER
+}
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  PATCH
+  DELETE
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PayoutMethod {
+  CRYPTO_WALLET
+  MOBILE_MONEY
+  BANK_TRANSFER
+}
+
+enum HealthCheckSource {
+  MONITOR
+  REAL_CALL
+}
+
+// ─── MODELS ────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  authDid       String    @unique
+  walletAddress String?   @unique
+  baseWallet    String?   @unique
+  email         String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  ledger       Ledger?
+  apiKeys      ApiKey[]
+  ledgerEntries LedgerEntry[]
+  provider     Provider?
+  reviews      Review[]
+}
+
+model Ledger {
+  id      String @id @default(cuid())
+  userId  String @unique
+  balance BigInt @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LedgerEntry {
+  id          String          @id @default(cuid())
+  userId      String
+  amount      BigInt
+  type        LedgerEntryType
+  referenceId String          @unique
+  chain       DepositChain?
+  createdAt   DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model Inbox {
+  id        String      @id @default(cuid())
+  txSig     String      @unique
+  chain     DepositChain
+  payload   Json
+  status    InboxStatus @default(PENDING)
+  retries   Int         @default(0)
+  errorMsg  String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  userId    String
+  keyHash   String    @unique
+  label     String    @default("My Key")
+  scopes    String[]  @default(["gateway:call", "agent:discover", "ledger:read"])
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([keyHash])
+}
+
+model Provider {
+  id           String       @id @default(cuid())
+  userId       String       @unique
+  businessName String
+  description  String
+  website      String?
+  logoUrl      String?
+  payoutWallet String?
+  payoutChain  DepositChain?
+  verified     Boolean      @default(false)
+  active       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  earnings ProviderEarnings?
+  routes   ProviderRoute[]
+  payouts  Payout[]
+}
+
+model ProviderRoute {
+  id               String          @id @default(cuid())
+  providerId       String
+  name             String
+  description      String
+  category         RouteCategory
+  tags             String[]        @default([])
+  upstreamUrl      String
+  httpMethod       HttpMethod      @default(POST)
+  timeoutMs        Int             @default(8000)
+  asyncMode        Boolean         @default(false)
+  testPayload      Json?
+  costMicroUsdc    BigInt
+  avgLatencyMs     Int?
+  uptimePct        Float?
+  avgRating        Float?
+  totalCalls       BigInt          @default(0)
+  openApiSpec      Json?
+  isPublic         Boolean         @default(false)
+  isActive         Boolean         @default(true)
+  suspensionReason String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  provider Provider         @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  healthLogs RouteHealthLog[]
+  reviews    Review[]
+
+  @@index([providerId])
+  @@index([category, isPublic, isActive])
+  @@index([costMicroUsdc])
+}
+
+model ProviderEarnings {
+  id         String @id @default(cuid())
+  providerId String @unique
+  balance    BigInt @default(0)
+  lifetime   BigInt @default(0)
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+}
+
+model Payout {
+  id              String       @id @default(cuid())
+  providerId      String
+  amountMicroUsdc BigInt
+  recipientWallet String
+  recipientChain  DepositChain?
+  payoutMethod    PayoutMethod
+  txSig           String?
+  status          PayoutStatus @default(PENDING)
+  errorMsg        String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId, status])
+}
+
+model RouteHealthLog {
+  id        String             @id @default(cuid())
+  routeId   String
+  success   Boolean
+  latencyMs Int?
+  source    HealthCheckSource  @default(MONITOR)
+  checkedAt DateTime           @default(now())
+
+  route ProviderRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@index([routeId, checkedAt(sort: Desc)])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  routeId   String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  route ProviderRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([routeId, userId])
+  @@index([routeId, rating])
+}

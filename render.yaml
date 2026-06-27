@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: api-gateway-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  - type: worker
+    name: api-gateway-worker
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm ci && npx prisma generate
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production

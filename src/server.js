@@ -18,6 +18,7 @@ import { gatewayRoutes } from './routes/gateway.js'
 import { marketplaceRoutes } from './routes/marketplace.js'
 import { reviewRoutes } from './routes/reviews.js'
 import { supportRoutes } from './routes/support.js'
+import { supportTicketRoutes } from './routes/support-tickets.js'
 
 // Job imports
 import { startHealthMonitor } from './jobs/health-monitor.js'
@@ -99,6 +100,7 @@ await fastify.register(gatewayRoutes, { prefix: '/v1' })
 await fastify.register(marketplaceRoutes, { prefix: '/v1' })
 await fastify.register(reviewRoutes, { prefix: '/v1' })
 await fastify.register(supportRoutes, { prefix: '/v1' })
+await fastify.register(supportTicketRoutes, { prefix: '/v1' })
 
 // PHASE 2 AGENT ROUTES — uncomment to enable agent layer:
 // import { agentRoutes } from './routes/agent/index.js'

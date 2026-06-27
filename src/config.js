@@ -47,6 +47,13 @@ const schema = z.object({
 
   // Observability
   SENTRY_DSN: z.string().url().optional(),
+
+  // Support notifications (at least one required for support tickets)
+  DISCORD_WEBHOOK_URL: z.string().url().optional(),
+  SLACK_WEBHOOK_URL: z.string().url().optional(),
+
+  // Admin authentication (for support endpoints)
+  ADMIN_SECRET: z.string().min(16, 'ADMIN_SECRET must be at least 16 characters').optional()
 })
 
 const parsed = schema.safeParse(process.env)
@@ -55,11 +62,14 @@ if (!parsed.success) {
   const errors = parsed.error.flatten().fieldErrors
   const missing = Object.entries(errors)
     .map(([key, messages]) => `  ${key}: ${messages.join(', ')}`)
-    .join('\n')
+    .join('
+')
 
-  console.error('❌ Invalid or missing environment variables:\n')
+  console.error('❌ Invalid or missing environment variables:
+')
   console.error(missing)
-  console.error('\nCheck your .env file against .env.example')
+  console.error('
+Check your .env file against .env.example')
   process.exit(1)
 }
 

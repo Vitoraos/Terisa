@@ -1,3 +1,4 @@
+// Fixed: notifyTicketReply early returns for AGENT senderType (Fix 3)
 import { config } from '../config.js'
 
 // ─── DISCORD WEBHOOK FORMATTER ─────────────────────────────────────────────
@@ -260,6 +261,10 @@ export async function notifyNewTicket(ticket, user, diagnosticUrl = null) {
  * @returns {Promise<boolean>}
  */
 export async function notifyTicketReply(ticket, message, sender) {
+  if (message.senderType === 'AGENT') {
+    return false
+  }
+
   const isAgent = message.senderType === 'AGENT'
   const emoji = isAgent ? '💬' : '👤'
   const color = isAgent ? 0x22c55e : 0x6366f1

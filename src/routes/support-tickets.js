@@ -1,5 +1,17 @@
+// Fixed: ADMIN_SECRET comparison replaced with timingSafeEqual (Fix 4)
 import { prisma } from '../lib/prisma.js'
+import { timingSafeEqual } from 'crypto'
 import { notifyNewTicket, notifyTicketReply } from '../lib/notifications.js'
+
+// Timing-safe admin secret verification (prevents timing attacks)
+function verifyAdminSecret(providedSecret) {
+  const expected = config.ADMIN_SECRET ?? ''
+  if (!providedSecret || !expected) return false
+  const providedBuf = Buffer.from(providedSecret, 'utf8')
+  const expectedBuf = Buffer.from(expected, 'utf8')
+  if (providedBuf.length !== expectedBuf.length) return false
+  return timingSafeEqual(providedBuf, expectedBuf)
+}
 
 const VALID_TICKET_CATEGORIES = new Set([
   'BILLING',
@@ -411,7 +423,7 @@ export async function supportTicketRoutes(fastify, options) {
   fastify.get('/support/admin/tickets', async (request, reply) => {
     // Verify admin secret
     const adminSecret = request.headers['x-admin-secret']
-    if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+    if (!verifyAdminSecret(adminSecret)) {
       return reply.code(401).send({ error: 'Unauthorized' })
     }
 
@@ -488,7 +500,7 @@ export async function supportTicketRoutes(fastify, options) {
   // ─── ADMIN: GET /support/admin/tickets/:id ───────────────────────────────
   fastify.get('/support/admin/tickets/:id', async (request, reply) => {
     const adminSecret = request.headers['x-admin-secret']
-    if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+    if (!verifyAdminSecret(adminSecret)) {
       return reply.code(401).send({ error: 'Unauthorized' })
     }
 
@@ -590,7 +602,7 @@ export async function supportTicketRoutes(fastify, options) {
   // ─── ADMIN: POST /support/admin/tickets/:id/messages ────────────────────
   fastify.post('/support/admin/tickets/:id/messages', async (request, reply) => {
     const adminSecret = request.headers['x-admin-secret']
-    if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+    if (!verifyAdminSecret(adminSecret)) {
       return reply.code(401).send({ error: 'Unauthorized' })
     }
 
@@ -679,7 +691,7 @@ export async function supportTicketRoutes(fastify, options) {
   // ─── ADMIN: PUT /support/admin/tickets/:id ────────────────────────────────
   fastify.put('/support/admin/tickets/:id', async (request, reply) => {
     const adminSecret = request.headers['x-admin-secret']
-    if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+    if (!verifyAdminSecret(adminSecret)) {
       return reply.code(401).send({ error: 'Unauthorized' })
     }
 

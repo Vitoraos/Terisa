@@ -1,3 +1,4 @@
+// Fixed: upstreamUrl removed from response (Fix 1), search pagination slice corrected (Fix 2)
 import { prisma } from '../lib/prisma.js'
 
 const VALID_ROUTE_CATEGORIES = new Set([
@@ -136,7 +137,7 @@ export async function marketplaceRoutes(fastify, options) {
       }
 
       // Apply pagination after filtering
-      results = results.slice(0, limit)
+      results = results.slice(offset, offset + limit)
 
     // ── Browse path (no q) ──
     } else {
@@ -251,7 +252,6 @@ export async function marketplaceRoutes(fastify, options) {
       description: route.description,
       category: route.category,
       tags: route.tags ?? [],
-      upstreamUrl: route.upstreamUrl,
       httpMethod: route.httpMethod,
       timeoutMs: route.timeoutMs,
       costMicroUsdc: route.costMicroUsdc.toString(),

@@ -64,11 +64,9 @@ if (!parsed.success) {
     .map(([key, messages]) => `  ${key}: ${messages.join(', ')}`)
     .join('\n')
 
-  console.error('❌ Invalid or missing environment variables:
-')
+  console.error('❌ Invalid or missing environment variables:\n')
   console.error(missing)
-  console.error('
-Check your .env file against .env.example')
+  console.error('\nCheck your .env file against .env.example')
   process.exit(1)
 }
 

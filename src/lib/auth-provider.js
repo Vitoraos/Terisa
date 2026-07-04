@@ -10,6 +10,10 @@ const privy = new PrivyClient(config.PRIVY_APP_ID, config.PRIVY_APP_SECRET)
 /**
  * Verifies a Privy authentication token and extracts user identity claims.
  *
+ * Wallet lookup is strictly Solana — this platform is Solana-first
+ * (see SOLANA_TREASURY_ADDRESS in config), and the frontend's Privy
+ * config creates Solana-only embedded wallets to match.
+ *
  * @param {string} token - The Privy auth token to verify
  * @returns {Promise<{did: string, walletAddress: string|null, email: string|null}>}
  * @throws {Error} If the token is invalid, expired, or verification fails

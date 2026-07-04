@@ -62,8 +62,7 @@ if (!parsed.success) {
   const errors = parsed.error.flatten().fieldErrors
   const missing = Object.entries(errors)
     .map(([key, messages]) => `  ${key}: ${messages.join(', ')}`)
-    .join('\n
-')
+    .join('\n')
 
   console.error('❌ Invalid or missing environment variables:
 ')

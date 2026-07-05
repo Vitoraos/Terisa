@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto'
 import { config } from '../config.js'
 import { debitApiUsage, refundApiUsage, creditProviderEarnings } from './ledger.js'
 import { recordCallLatency, recordCallFailure } from './metrics.js'
+import { enqueueCallAnchor } from './anchorQueue.js'
 
 /**
  * Core proxy function that forwards a consumer request to a provider endpoint.
@@ -112,6 +113,14 @@ export async function proxyRequest({ userId, route, body, extraHeaders = {} }) {
     // 14. Success — credit provider and record latency
     await creditProviderEarnings({ providerId: route.providerId, amountMicroUsdc: providerCut, referenceId })
     await recordCallLatency(route.id, latencyMs)
+
+    // 15. Best-effort: queue this call for on-chain anchoring on Solana.
+    // Fire-and-forget — never awaited into the response, never allowed
+    // to affect it. enqueueCallAnchor() never throws internally, but the
+    // .catch() here is a defensive backstop in case something upstream
+    // of it ever changes that contract.
+    enqueueCallAnchor({ userId, routeId: route.id, amountMicroUsdc: costMicroUsdc, referenceId })
+      .catch((err) => console.error('[proxyRequest] enqueueCallAnchor failed:', err.message))
 
     return {
       success: true,

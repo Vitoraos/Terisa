@@ -69,6 +69,13 @@ enum HealthCheckSource {
   REAL_CALL
 }
 
+enum CallAnchorStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+
 // ─── MODELS ────────────────────────────────────────────────────────────────
 
 model User {
@@ -246,3 +253,19 @@ model Review {
   @@unique([routeId, userId])
   @@index([routeId, rating])
 }
+
+model CallAnchorReceipt {
+  id            String              @id @default(cuid())
+  referenceId   String              @unique
+  payload       String
+  status        CallAnchorStatus    @default(PENDING)
+  txSignature   String?
+  recordAddress String?
+  attempts      Int                 @default(0)
+  lastError     String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([status])
+}
+

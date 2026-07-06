@@ -1,1 +1,42 @@
-{"version":"0.1.0","name":"terisa_calls","instructions":[{"name":"recordCall","accounts":[{"name":"caller","isMut":true,"isSigner":true},{"name":"record","isMut":true,"isSigner":false},{"name":"systemProgram","isMut":false,"isSigner":false}],"args":[{"name":"routeId","type":"string"},{"name":"amountMicroUsdc","type":"u64"},{"name":"referenceId","type":"string"}]}],"accounts":[{"name":"CallRecord","type":{"kind":"struct","fields":[{"name":"caller","type":"publicKey"},{"name":"routeId","type":"string"},{"name":"amountMicroUsdc","type":"u64"},{"name":"referenceId","type":"string"},{"name":"timestamp","type":"i64"},{"name":"bump","type":"u8"}]}}],"errors":[{"code":6000,"name":"StringTooLong","msg":"Provided string exceeds the maximum allowed length"}]}
+{
+  "version": "0.1.0",
+  "name": "terisa_calls",
+  "instructions": [
+    {
+      "name": "recordCall",
+      "accounts": [
+        { "name": "caller", "isMut": true, "isSigner": true },
+        { "name": "record", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "routeId", "type": "string" },
+        { "name": "amountMicroUsdc", "type": "u64" },
+        { "name": "referenceId", "type": "string" }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "CallRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "caller", "type": "publicKey" },
+          { "name": "routeId", "type": "string" },
+          { "name": "amountMicroUsdc", "type": "u64" },
+          { "name": "referenceId", "type": "string" },
+          { "name": "timestamp", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "StringTooLong",
+      "msg": "Provided string exceeds the maximum allowed length"
+    }
+  ]
+}

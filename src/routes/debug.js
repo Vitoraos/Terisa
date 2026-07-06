@@ -14,13 +14,16 @@
  */
 
 import { prisma } from '../lib/prisma.js'
-import { config } from '../config.js'
 
 export async function debugRoutes(fastify) {
   fastify.post('/debug/set-balance', async (request, reply) => {
     const { secret, email, amountMicroUsdc } = request.body ?? {}
 
-    if (!config.DEBUG_SECRET || secret !== config.DEBUG_SECRET) {
+    // Read directly from process.env rather than config.js's Zod schema
+    // — this is a temporary debug-only route, so it intentionally
+    // bypasses the normal config layer to avoid needing a schema change
+    // for something meant to be deleted after testing.
+    if (!process.env.DEBUG_SECRET || secret !== process.env.DEBUG_SECRET) {
       return reply.code(403).send({ error: 'Forbidden' })
     }
 

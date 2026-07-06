@@ -23,6 +23,7 @@ import { supportTicketRoutes } from './routes/support-tickets.js'
 // Job imports
 import { startHealthMonitor } from './jobs/health-monitor.js'
 import { startSuspensionCheck } from './jobs/suspension-check.js'
+import { startCallAnchorWorker } from './jobs/anchorWorker.js'
 
 // ─── 1. Initialize Sentry (before anything else) ─────────────────────────────
 if (config.SENTRY_DSN) {
@@ -126,6 +127,16 @@ try {
 } catch (err) {
   console.error('[server] Suspension check failed to start:', err.message)
   // Non-fatal: server can still serve requests without auto-suspension
+}
+
+try {
+  await startCallAnchorWorker()
+} catch (err) {
+  console.error('[server] Solana call-anchor worker failed to start:', err.message)
+  // Non-fatal: gateway calls still succeed and bill correctly even if
+  // on-chain anchoring is unavailable — see anchorQueue.js/anchorWorker.js.
+  // Calls will simply queue up as PENDING CallAnchorReceipt rows until
+  // this worker (or a future restart) is able to drain them.
 }
 
 // ─── 10. Start server ───────────────────────────────────────────────────────
